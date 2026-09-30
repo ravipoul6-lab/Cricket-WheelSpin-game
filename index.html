@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Multiplayer (2–6) online cricket T20 Spin Wheel — doston ke saath link share karo aur khelo.">
+<title>T20 Spin Wheel — Multiplayer Cricket</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏏</text></svg>">
+<style>
+:root{
+  --bg:#f3f1ea; --card:#ffffff; --ink:#15201a; --muted:#5f6b63; --line:#dcd8cc;
+  --pitch:#1f7a4d; --pitch-2:#155c39; --ball:#c8283a; --gold:#e3a51c; --x:#1d5fd1; --y:#d2451e;
+  --ok:#1f9d55; --bad:#c8283a; --shadow:0 6px 24px rgba(20,30,25,.08);
+  --p0:#1d5fd1; --p1:#d2451e; --p2:#1f8f4e; --p3:#8a3fb8; --p4:#b07d00; --p5:#0f8a8a;
+  --r:16px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1411; --card:#172019; --ink:#eaf1ec; --muted:#98a69d; --line:#2a362e;
+    --pitch:#2fa36a; --pitch-2:#23844f; --ball:#ef5466; --gold:#f2bb3d; --x:#5b94ff; --y:#ff7a50;
+    --ok:#3ccf7d; --bad:#ff6474; --shadow:0 6px 24px rgba(0,0,0,.35);
+    --p0:#5b94ff; --p1:#ff7a50; --p2:#3ccf7d; --p3:#c38bff; --p4:#f2bb3d; --p5:#3fd0d0;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;-webkit-tap-highlight-color:transparent;min-height:100vh}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:.7rem 1rem;background:var(--line);color:var(--ink);font-weight:600;transition:transform .08s,opacity .2s}
+button:active:not(:disabled){transform:scale(.97)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--pitch);color:#fff}
+button.gold{background:var(--gold);color:#1b1400}
+button.ghost{background:transparent;border:1.5px solid var(--line)}
+button.sm{padding:.4rem .7rem;font-size:.85rem;border-radius:9px}
+input{font:inherit;padding:.7rem .9rem;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+.hidden{display:none!important}
+#app{max-width:980px;margin:0 auto;padding:12px 14px 40px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 2px 12px}
+.brand{font-size:1.15rem;font-weight:800;letter-spacing:.2px}
+.brand b{color:var(--pitch)}
+.conn{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);background:var(--card);padding:.3rem .65rem;border-radius:99px;border:1px solid var(--line)}
+.conn .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.conn.on .dot{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.conn.off .dot{background:var(--bad)}
+.err{background:color-mix(in srgb,var(--bad) 14%,var(--card));border:1.5px solid var(--bad);color:var(--ink);padding:.7rem .9rem;border-radius:12px;margin-bottom:12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.err b{color:var(--bad)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.stack>*+*{margin-top:12px}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* home */
+.hero{text-align:center;padding:26px 16px 22px;background:linear-gradient(160deg,var(--pitch),var(--pitch-2));color:#fff;border-radius:22px;position:relative;overflow:hidden}
+.hero h1{margin:.2rem 0 .3rem;font-size:clamp(1.7rem,6vw,2.6rem);line-height:1.1}
+.hero p{margin:0 auto;max-width:34ch;opacity:.92}
+.hero .ballz{font-size:2.6rem}
+.hero::after{content:"";position:absolute;inset:auto -40px -60px auto;width:180px;height:180px;border-radius:50%;border:14px dashed rgba(255,255,255,.12)}
+.actions{display:grid;gap:10px;margin-top:16px}
+.actions button{padding:.95rem 1rem;font-size:1.05rem}
+.join{display:flex;gap:8px}
+.join input{flex:1;text-transform:uppercase;letter-spacing:3px;font-weight:700}
+.rules{margin:0;padding-left:1.1rem}
+.rules li+li{margin-top:4px}
+/* game */
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:.3rem .7rem;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:.85rem;font-weight:600}
+.c0{--pc:var(--p0)} .c1{--pc:var(--p1)} .c2{--pc:var(--p2)} .c3{--pc:var(--p3)} .c4{--pc:var(--p4)} .c5{--pc:var(--p5)}
+.pill[class*=" c"]{color:var(--pc);border-color:var(--pc)}
+.pill.now{background:color-mix(in srgb,var(--pc) 16%,var(--card))}
+.pill.off{opacity:.55}
+.turn{font-size:clamp(1.2rem,4.5vw,1.6rem);font-weight:800;text-align:center;margin:10px 0 2px}
+.turn.me{color:var(--pitch)}
+.event{text-align:center;color:var(--muted);min-height:1.5em;font-size:.95rem}
+.score{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.score .pill b{font-variant-numeric:tabular-nums}
+.grid{display:grid;gap:14px}
+@media (min-width:820px){.grid{grid-template-columns:1.1fr .9fr;align-items:start}}
+.wheelwrap{position:relative;width:100%;max-width:440px;margin:0 auto}
+.wheelwrap canvas{width:100%;aspect-ratio:1;display:block}
+.pointer{position:absolute;left:50%;top:-4px;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:28px solid var(--ball);filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));z-index:2}
+.spinbtn{display:block;margin:14px auto 0;font-size:1.25rem;padding:.9rem 2.6rem;border-radius:99px;letter-spacing:1px}
+.decide h3,.panel h3{margin:0 0 8px;font-size:1.05rem}
+.pcard{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pcard .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;background:var(--pitch);flex:none}
+.pcard .nm{font-weight:800;font-size:1.1rem;line-height:1.2}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:.45rem .4rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:.78rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700}
+td.num{font-variant-numeric:tabular-nums;font-weight:700}
+.slots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.slot{border:1.5px dashed var(--line);border-radius:12px;padding:.5rem .6rem;min-height:58px;position:relative}
+.slot.filled{border-style:solid;background:color-mix(in srgb,var(--pitch) 8%,var(--card))}
+.slot .k{font-size:.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.slot .v{font-weight:700;font-size:.92rem;line-height:1.25}
+.badge2x{position:absolute;top:6px;right:6px;background:var(--gold);color:#1b1400;font-size:.7rem;font-weight:800;padding:1px 6px;border-radius:6px}
+.opp+.opp{margin-top:10px}
+.opp .who{display:flex;justify-content:space-between;gap:8px;font-size:.85rem;font-weight:700;color:var(--pc);margin-bottom:4px}
+.lockgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.lockgrid div{height:22px;border-radius:6px;display:grid;place-items:center;border:1.5px dashed var(--line);font-size:.7rem}
+.lockgrid div.f{border-style:solid;border-color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,var(--card))}
+.plist{list-style:none;margin:0;padding:0}
+.plist li{display:flex;align-items:center;gap:8px;padding:.45rem 0;border-bottom:1px solid var(--line)}
+.plist li:last-child{border-bottom:0}
+.plist .dot{width:9px;height:9px;border-radius:50%;background:var(--bad);flex:none}
+.plist .dot.on{background:var(--ok)}
+.plist .nm{flex:1;font-weight:700;color:var(--pc)}
+.cd{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:.9rem}
+.cd .cdbar{flex:1;height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+.cd .cdbar i{display:block;height:100%;width:100%;background:var(--gold);transition:width .25s linear}
+.cd b{font-variant-numeric:tabular-nums;min-width:3.2ch;text-align:right}
+.cd.low b{color:var(--bad)} .cd.low .cdbar i{background:var(--bad)}
+.rank{list-style:none;margin:10px auto 0;padding:0;max-width:320px;text-align:left}
+.rank li{display:flex;justify-content:space-between;gap:10px;padding:.25rem .6rem;border-radius:9px;font-weight:700}
+.rank li.top{background:rgba(255,255,255,.45)}
+.picker{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.picker button{background:var(--bg);border:1.5px solid var(--line);text-align:left}
+.picker button.sel{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 22%,var(--card))}
+.share{display:flex;gap:8px}
+.share input{flex:1;font-size:.85rem}
+.code{font-size:2rem;font-weight:900;letter-spacing:6px;text-align:center;color:var(--pitch)}
+.win{text-align:center;padding:18px;border-radius:18px;background:linear-gradient(160deg,var(--gold),#f6d57a);color:#231800}
+.win h2{margin:0;font-size:1.7rem}
+.win .big{font-size:2.4rem;font-weight:900;font-variant-numeric:tabular-nums}
+td.w{background:color-mix(in srgb,var(--ok) 16%,transparent)}
+.tag2x{display:inline-block;background:var(--gold);color:#1b1400;font-size:.68rem;font-weight:800;padding:0 5px;border-radius:5px;margin-left:4px;vertical-align:middle}
+.ds{font-size:1.4rem;font-weight:900;text-align:center;color:var(--gold)}
+.scroll{overflow-x:auto}
+.foot{text-align:center;margin-top:22px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand">🏏 <b>T20</b> Spin Wheel</div>
+    <div id="conn" class="conn hidden"><span class="dot"></span><span id="connText"></span></div>
+  </header>
+  <div id="err" class="err hidden"><span id="errMsg"></span><span id="errAct"></span></div>
+
+  <!-- HOME -->
+  <section id="home" class="stack">
+    <div class="hero">
+      <div class="ballz">🎡🏏</div>
+      <h1>T20 Spin Wheel</h1>
+      <p>Wheel ghumao, international T20 stars pakdo, apni 8-stat team banao aur 2 se 6 doston ko harao!</p>
+    </div>
+    <div class="card">
+      <label class="muted small" for="myName">Tumhara naam</label>
+      <input id="myName" maxlength="16" placeholder="Jaise: Rahul" autocomplete="nickname" style="width:100%;margin:4px 0 2px">
+      <div class="actions">
+        <button id="btnCreate" class="primary">➕ Naya room banao</button>
+        <button id="btnResume" class="gold hidden">↩️ Room resume karo</button>
+      </div>
+      <p class="muted small" style="margin:14px 0 6px">Dost ne room code bheja hai? Yahan daalo:</p>
+      <form id="joinForm" class="join">
+        <input id="joinCode" maxlength="5" placeholder="ABCDE" autocomplete="off" aria-label="Room code">
+        <button class="ghost" type="submit">Join karo</button>
+      </form>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Kaise khelein</h3>
+      <ol class="rules muted small">
+        <li>Host room banata hai aur link share karta hai. <b>2 se 6 players</b> join kar sakte hain — sab aa jaayein to host game shuru karta hai.</li>
+        <li>Shuru se pehle har player chupke se ek stat ko <b>2x</b> chunta hai.</li>
+        <li>Baari-baari SPIN karo. Jo player mile, uske stats sirf tumhe dikhenge — ek khaali slot mein lock karo ya Skip karo (poore game mein sirf 3 Skips).</li>
+        <li>Faisle ke liye sirf <b>30 second</b>! Time khatam hote hi player kisi bhi khaali slot mein apne aap lock ho jayega.</li>
+        <li><b>DOUBLE SPIN</b> aaye to turant ek aur spin, baari nahi badlegi.</li>
+        <li>Sab ke 8 slots bhar gaye to har stat ka sabse behtar value 1 point (2x slot pe 2 points). Barabari pe sabse behtar sab ko point. Bowling avg aur Economy mein kam value behtar.</li>
+        <li>Har game mein 150+ stars ke pool se naye players wheel pe aate hain.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" class="hidden">
+    <div class="bar">
+      <span class="pill">Room: <b id="gCode"></b></span>
+      <span id="gRole" class="pill"></span>
+    </div>
+    <div id="gTurn" class="turn"></div>
+    <div id="gEvent" class="event"></div>
+    <div id="gScore" class="score"></div>
+    <div id="gBody"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ---------------- DATA ---------------- */
+// Approximate career T20I stats: [name, team, matches, runs, bat avg, strike rate, wickets, bowl avg, economy, catches]
+// null = no data (e.g. never bowled / no wicket). New players are appended so saved rooms keep valid ids.
+const RAW = [
+  ["Virat Kohli","IND",125,4188,48.7,137.0,4,51.0,8.1,54],
+  ["Rohit Sharma","IND",159,4231,32.1,140.9,1,113.0,9.0,65],
+  ["Suryakumar Yadav","IND",78,2570,40.8,168.7,2,6.5,9.8,38],
+  ["Hardik Pandya","IND",110,1700,27.4,140.1,89,26.1,8.1,45],
+  ["Jasprit Bumrah","IND",70,8,2.7,57.1,89,17.7,6.3,11],
+  ["Ravindra Jadeja","IND",74,515,21.5,127.2,54,29.9,7.1,28],
+  ["KL Rahul","IND",72,2265,37.8,139.1,null,null,null,24],
+  ["Rishabh Pant","IND",76,1209,23.3,127.0,null,null,null,44],
+  ["Yuzvendra Chahal","IND",80,11,5.5,64.7,96,24.7,8.2,16],
+  ["Arshdeep Singh","IND",60,64,10.7,108.5,95,18.3,8.2,13],
+  ["MS Dhoni","IND",98,1617,37.6,126.1,null,null,null,57],
+  ["Kuldeep Yadav","IND",40,46,11.5,90.2,69,14.1,6.8,12],
+  ["Babar Azam","PAK",128,4223,39.8,129.2,null,null,null,49],
+  ["Mohammad Rizwan","PAK",102,3313,47.3,126.5,null,null,null,70],
+  ["Shaheen Afridi","PAK",74,180,10.0,130.4,98,21.9,7.7,14],
+  ["Shadab Khan","PAK",104,1003,19.3,137.4,112,22.3,7.3,50],
+  ["Shahid Afridi","PAK",99,1416,17.9,150.8,98,24.4,6.6,36],
+  ["Haris Rauf","PAK",75,70,7.0,100.0,106,21.4,8.3,12],
+  ["Fakhar Zaman","PAK",90,1900,23.8,131.2,null,null,null,40],
+  ["Shoaib Malik","PAK",124,2435,31.2,125.7,28,26.0,7.1,50],
+  ["David Warner","AUS",110,3277,33.4,142.5,null,null,null,56],
+  ["Glenn Maxwell","AUS",114,2754,29.9,155.1,45,28.9,8.1,53],
+  ["Aaron Finch","AUS",103,3120,34.3,142.5,null,null,null,37],
+  ["Travis Head","AUS",36,1093,33.1,158.4,1,45.0,9.0,15],
+  ["Mitchell Starc","AUS",65,100,11.1,110.0,79,22.9,7.7,21],
+  ["Pat Cummins","AUS",57,150,12.5,128.2,66,24.7,7.3,15],
+  ["Adam Zampa","AUS",92,60,6.0,100.0,113,20.5,7.0,20],
+  ["Marcus Stoinis","AUS",72,1245,27.1,146.5,44,27.0,8.5,25],
+  ["Josh Hazlewood","AUS",55,10,5.0,70.0,73,20.7,7.6,12],
+  ["Mitchell Marsh","AUS",60,1600,33.9,136.0,20,30.0,8.4,24],
+  ["Jos Buttler","ENG",124,3389,35.3,145.0,null,null,null,70],
+  ["Ben Stokes","ENG",43,585,20.9,136.0,26,32.2,8.8,18],
+  ["Eoin Morgan","ENG",115,2458,28.6,136.2,null,null,null,44],
+  ["Adil Rashid","ENG",110,200,11.1,110.5,116,24.2,7.3,23],
+  ["Chris Jordan","ENG",95,421,11.1,134.1,96,28.0,8.6,45],
+  ["Liam Livingstone","ENG",50,954,26.5,147.0,26,22.0,8.2,20],
+  ["Phil Salt","ENG",40,1200,36.4,165.0,null,null,null,18],
+  ["Moeen Ali","ENG",92,1229,20.8,139.5,51,23.4,7.9,28],
+  ["Sam Curran","ENG",48,430,18.7,118.1,49,25.4,8.3,10],
+  ["Shakib Al Hasan","BAN",129,2551,23.2,121.2,149,20.9,6.8,30],
+  ["Kane Williamson","NZ",93,2575,33.4,123.1,6,24.5,8.4,40],
+  ["Martin Guptill","NZ",122,3531,31.8,135.7,null,null,null,55],
+  ["Trent Boult","NZ",61,40,6.7,90.0,83,20.2,7.8,25],
+  ["Tim Southee","NZ",126,300,9.1,120.0,164,22.4,8.2,45],
+  ["Devon Conway","NZ",50,1400,35.0,128.0,null,null,null,30],
+  ["Glenn Phillips","NZ",70,1600,29.1,142.0,15,20.0,7.6,40],
+  ["Mitchell Santner","NZ",110,700,17.1,115.0,118,22.6,7.1,40],
+  ["Quinton de Kock","SA",90,2584,31.9,137.0,null,null,null,60],
+  ["David Miller","SA",120,2437,36.4,141.0,null,null,null,60],
+  ["AB de Villiers","SA",78,1672,26.1,135.2,null,null,null,65],
+  ["Kagiso Rabada","SA",65,90,10.0,110.0,70,25.6,8.3,15],
+  ["Tabraiz Shamsi","SA",70,50,5.0,90.0,89,19.8,7.1,12],
+  ["Anrich Nortje","SA",42,20,4.0,70.0,53,18.5,6.8,10],
+  ["Heinrich Klaasen","SA",58,1000,23.3,142.0,null,null,null,25],
+  ["Chris Gayle","WI",79,1899,27.9,137.5,17,25.0,7.6,30],
+  ["Kieron Pollard","WI",101,1569,25.3,135.1,42,27.6,8.6,50],
+  ["Andre Russell","WI",80,1000,22.2,163.0,60,25.0,9.0,30],
+  ["Nicholas Pooran","WI",106,2275,26.4,136.0,null,null,null,40],
+  ["Sunil Narine","WI",51,155,9.1,100.0,52,21.3,5.9,8],
+  ["Rashid Khan","AFG",93,460,11.2,138.0,152,14.0,6.1,25],
+  // ---- added ----
+  ["Shikhar Dhawan","IND",68,1759,27.9,126.4,null,null,null,11],
+  ["Yuvraj Singh","IND",58,1177,28.0,136.4,28,17.8,7.1,12],
+  ["Ravichandran Ashwin","IND",65,184,26.3,123.5,72,23.2,6.9,15],
+  ["Bhuvneshwar Kumar","IND",87,67,8.4,88.2,90,23.1,7.0,17],
+  ["Mohammed Shami","IND",25,15,5.0,88.2,27,29.6,8.9,5],
+  ["Axar Patel","IND",70,700,20.0,140.0,75,22.0,7.3,20],
+  ["Shubman Gill","IND",21,578,30.4,139.3,null,null,null,8],
+  ["Yashasvi Jaiswal","IND",23,723,36.2,164.3,null,null,null,10],
+  ["Sanju Samson","IND",42,861,25.3,152.4,null,null,null,20],
+  ["Abhishek Sharma","IND",24,850,36.9,196.0,4,25.0,9.0,10],
+  ["Tilak Varma","IND",25,750,49.9,155.1,1,40.0,9.5,10],
+  ["Rinku Singh","IND",33,550,42.3,161.8,2,5.5,8.5,15],
+  ["Washington Sundar","IND",54,244,17.4,125.1,48,23.5,7.2,20],
+  ["Varun Chakaravarthy","IND",24,20,5.0,70.0,43,14.2,6.9,5],
+  ["Suresh Raina","IND",78,1605,29.2,134.9,13,34.0,7.4,42],
+  ["Shreyas Iyer","IND",51,1104,30.7,136.1,null,null,null,20],
+  ["Ishan Kishan","IND",32,796,25.7,124.4,null,null,null,16],
+  ["Mohammad Nawaz","PAK",67,680,17.0,133.0,58,24.0,7.2,20],
+  ["Mohammad Amir","PAK",62,90,9.0,100.0,71,20.4,7.1,10],
+  ["Umar Gul","PAK",60,165,9.7,125.0,85,17.8,7.3,10],
+  ["Saeed Ajmal","PAK",64,43,4.3,70.0,85,17.8,6.4,8],
+  ["Mohammad Hafeez","PAK",119,2514,26.2,122.0,61,24.1,6.9,40],
+  ["Naseem Shah","PAK",30,50,10.0,110.0,25,30.0,8.0,5],
+  ["Imad Wasim","PAK",75,550,20.0,125.0,73,23.0,6.3,15],
+  ["Saim Ayub","PAK",30,500,18.0,135.0,5,30.0,8.0,10],
+  ["Steve Smith","AUS",67,1094,24.9,125.4,8,24.2,7.6,40],
+  ["Matthew Wade","AUS",92,1202,26.1,134.4,null,null,null,60],
+  ["Shane Watson","AUS",58,1462,29.2,145.3,48,24.7,7.8,20],
+  ["Nathan Ellis","AUS",25,30,6.0,100.0,33,21.4,8.0,5],
+  ["Tim David","AUS",55,1200,31.0,165.0,null,null,null,25],
+  ["Cameron Green","AUS",15,300,30.0,150.0,10,30.0,9.0,8],
+  ["Josh Inglis","AUS",35,850,28.0,158.0,null,null,null,15],
+  ["Ashton Agar","AUS",49,230,11.5,120.0,55,21.5,7.2,20],
+  ["Jonny Bairstow","ENG",80,1671,29.3,137.6,null,null,null,50],
+  ["Alex Hales","ENG",75,2074,31.0,138.7,null,null,null,30],
+  ["Jason Roy","ENG",64,1522,24.2,137.6,null,null,null,20],
+  ["Harry Brook","ENG",40,800,26.0,145.0,null,null,null,20],
+  ["Mark Wood","ENG",35,20,5.0,90.0,50,19.0,8.0,8],
+  ["Jofra Archer","ENG",20,40,8.0,110.0,23,24.0,7.6,5],
+  ["Reece Topley","ENG",30,20,5.0,70.0,40,20.0,8.0,6],
+  ["Dawid Malan","ENG",62,1892,36.4,128.8,1,27.0,7.1,20],
+  ["Brendon McCullum","NZ",71,2140,35.7,136.2,null,null,null,36],
+  ["Ross Taylor","NZ",102,1909,26.1,122.4,null,null,null,46],
+  ["Colin Munro","NZ",65,1724,31.3,156.4,null,null,null,20],
+  ["Ish Sodhi","NZ",120,300,9.0,100.0,145,23.5,8.1,30],
+  ["Lockie Ferguson","NZ",40,20,5.0,70.0,60,15.0,7.0,8],
+  ["Finn Allen","NZ",40,1000,24.0,165.0,null,null,null,15],
+  ["Daryl Mitchell","NZ",80,1200,26.0,137.0,10,30.0,8.5,30],
+  ["Rachin Ravindra","NZ",25,300,17.0,120.0,15,30.0,7.5,10],
+  ["Faf du Plessis","SA",50,1528,35.5,134.5,1,24.0,9.3,23],
+  ["Aiden Markram","SA",45,1200,32.0,145.0,10,25.0,7.5,20],
+  ["Reeza Hendricks","SA",70,2000,30.0,130.0,null,null,null,20],
+  ["Imran Tahir","SA",38,50,5.0,90.0,63,15.0,6.7,10],
+  ["Dale Steyn","SA",47,50,5.0,80.0,64,18.4,6.9,10],
+  ["Lungi Ngidi","SA",45,30,5.0,80.0,60,21.0,8.3,10],
+  ["Marco Jansen","SA",20,250,20.0,140.0,20,26.0,8.2,5],
+  ["Tristan Stubbs","SA",35,700,25.0,140.0,null,null,null,20],
+  ["Keshav Maharaj","SA",40,50,8.0,100.0,40,22.0,7.0,10],
+  ["Dwayne Bravo","WI",91,1255,22.4,115.4,78,25.4,8.2,40],
+  ["Marlon Samuels","WI",67,1611,29.8,116.2,22,34.0,7.7,15],
+  ["Shimron Hetmyer","WI",50,800,20.0,120.0,null,null,null,20],
+  ["Shai Hope","WI",40,1000,30.0,135.0,null,null,null,20],
+  ["Rovman Powell","WI",90,1700,25.0,145.0,5,30.0,9.0,30],
+  ["Jason Holder","WI",60,500,15.0,130.0,70,22.0,8.0,25],
+  ["Akeal Hosein","WI",60,300,15.0,110.0,55,24.0,6.8,15],
+  ["Alzarri Joseph","WI",35,50,8.0,100.0,40,25.0,8.8,8],
+  ["Lasith Malinga","SL",84,295,5.9,97.0,107,20.8,7.4,12],
+  ["Kumar Sangakkara","SL",56,1382,31.4,119.7,null,null,null,25],
+  ["Mahela Jayawardene","SL",55,1493,31.1,133.2,null,null,null,20],
+  ["Tillakaratne Dilshan","SL",80,1889,28.2,120.6,9,40.0,7.7,20],
+  ["Angelo Mathews","SL",90,1400,25.0,120.0,45,25.0,7.3,30],
+  ["Wanindu Hasaranga","SL",75,600,12.0,120.0,120,15.8,6.9,25],
+  ["Kusal Mendis","SL",70,1800,26.0,135.0,null,null,null,30],
+  ["Pathum Nissanka","SL",60,1600,28.0,125.0,null,null,null,20],
+  ["Maheesh Theekshana","SL",55,80,5.0,80.0,55,25.0,6.9,10],
+  ["Charith Asalanka","SL",60,1200,24.0,125.0,5,25.0,8.0,20],
+  ["Mustafizur Rahman","BAN",100,50,5.0,80.0,125,20.0,7.3,20],
+  ["Mahmudullah","BAN",140,2400,23.0,118.0,40,30.0,7.4,50],
+  ["Mushfiqur Rahim","BAN",102,1500,19.5,115.0,null,null,null,40],
+  ["Litton Das","BAN",90,2000,22.0,125.0,null,null,null,40],
+  ["Mohammad Nabi","AFG",125,2200,22.0,138.0,95,26.0,7.3,40],
+  ["Rahmanullah Gurbaz","AFG",60,1500,24.0,130.0,null,null,null,30],
+  ["Fazalhaq Farooqi","AFG",45,20,4.0,70.0,55,20.0,7.1,8],
+  ["Mujeeb Ur Rahman","AFG",45,80,8.0,100.0,55,18.0,6.4,10],
+  ["Ibrahim Zadran","AFG",45,1200,32.0,115.0,null,null,null,15],
+  ["Naveen-ul-Haq","AFG",45,100,10.0,110.0,60,20.0,7.5,10],
+  ["Paul Stirling","IRE",150,3600,27.5,135.0,20,30.0,7.5,50],
+];
+const STATS = [
+  {k:"m",n:"Matches"},{k:"r",n:"Runs"},{k:"ba",n:"Batting avg"},{k:"sr",n:"Strike rate"},
+  {k:"w",n:"Wickets"},{k:"bo",n:"Bowling avg",lo:true},{k:"ec",n:"Economy",lo:true},{k:"c",n:"Catches"}
+];
+const LABELS = {"Suryakumar Yadav":"SKY","Kuldeep Yadav":"Kuldeep","Shaheen Afridi":"Shaheen","Shahid Afridi":"Afridi","Shadab Khan":"Shadab","Rashid Khan":"R. Khan","Shakib Al Hasan":"Shakib","Mitchell Marsh":"M. Marsh",
+  "Abhishek Sharma":"Abhishek","Mohammed Shami":"Shami","Mohammad Amir":"Amir","Mohammad Nawaz":"Nawaz","Mohammad Hafeez":"Hafeez","Mohammad Nabi":"Nabi","Imad Wasim":"Imad",
+  "Daryl Mitchell":"D. Mitchell","Tillakaratne Dilshan":"Dilshan","Mustafizur Rahman":"Mustafiz","Mujeeb Ur Rahman":"Mujeeb","Varun Chakaravarthy":"Varun","Rinku Singh":"Rinku","Yuvraj Singh":"Yuvraj"};
+const P = RAW.map((r,i)=>({id:i,name:r[0],team:r[1],label:LABELS[r[0]]||r[0].split(" ").slice(1).join(" ")||r[0],
+  s:{m:r[2],r:r[3],ba:r[4],sr:r[5],w:r[6],bo:r[7],ec:r[8],c:r[9]}}));
+const DS = -1; // DOUBLE SPIN segment
+const SLOTS = 8, SKIPS = 3, SPIN_MS = 4000;
+const MIN_PLAYERS = 2, MAX_PLAYERS = 6;
+const DECIDE_MS = 30000, GRACE_MS = 4000; // decision countdown; host force-locks after the grace period
+const PEER_URLS = ["https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js","https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"];
+const HOST_KEY = "t20w-host", TOKEN_KEY = "t20w-token", NAME_KEY = "t20w-name";
+
+/* ---------------- HELPERS ---------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = v => v==null ? "—" : String(v);
+const statName = k => STATS.find(s=>s.k===k).n;
+const cleanName = s => String(s||"").replace(/\s+/g," ").trim().slice(0,16);
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+function randCode(){ const a="ABCDEFGHJKMNPQRSTUVWXYZ23456789"; let s=""; for(let i=0;i<5;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function token(){ let t=localStorage.getItem(TOKEN_KEY); if(!t){ t=Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem(TOKEN_KEY,t); } return t; }
+function myName(){ try { return cleanName(localStorage.getItem(NAME_KEY)); } catch(e){ return ""; } }
+function nameOf(i){ const p=state && state.players[i]; return (p && p.name) || "Player "+(i+1); }
+const pc = i => "c"+(i%6);
+
+function loadPeerJS(){
+  return new Promise((res,rej)=>{
+    if(window.Peer) return res();
+    let i=0;
+    const next=()=>{
+      if(i>=PEER_URLS.length) return rej(new Error("PeerJS load nahi hua"));
+      const s=document.createElement("script"); s.src=PEER_URLS[i++]; s.async=true;
+      s.onload=()=> window.Peer ? res() : next();
+      s.onerror=()=>{ s.remove(); next(); };
+      document.head.appendChild(s);
+    };
+    next();
+  });
+}
+
+/* ---------------- APP STATE ---------------- */
+// seat: 0 = host, 1..5 = guests. Host keeps one connection per guest seat in `conns`.
+let seat=null, code=null, isHost=false, peer=null, conn=null, conns=[], state=null, priv=null, skew=0, peerOpen=false;
+let rot=0, anim=null, seenSeq=0, firstState=true, spinReq=false, decidedSeq=0, sentFinal=false;
+let pick2x=null, freshRoom=false, retryTimer=null, stopRetry=false, everJoined=false;
+
+function privKey(){ return "t20w-priv-"+code+"-"+(isHost?"H":"G"); }
+function loadPriv(){ priv = lsGet(privKey()) || {}; priv.picks=priv.picks||{}; priv.dbl=priv.dbl||null; priv.all=priv.all||{}; }
+function savePriv(){ lsSet(privKey(), priv); }
+function saveHost(){ if(isHost) lsSet(HOST_KEY,{code,state}); }
+const hostNow = () => Date.now()+skew;
+
+function showErr(msg, btnLabel, fn){
+  $("#errMsg").innerHTML = "<b>⚠️</b> "+esc(msg);
+  const a=$("#errAct"); a.innerHTML="";
+  if(btnLabel){ const b=document.createElement("button"); b.className="sm"; b.textContent=btnLabel; b.onclick=fn; a.appendChild(b); }
+  $("#err").classList.remove("hidden");
+}
+function clearErr(){ $("#err").classList.add("hidden"); }
+function setConn(on, text){
+  const c=$("#conn"); c.classList.remove("hidden","on","off"); c.classList.add(on?"on":"off"); $("#connText").textContent=text;
+}
+function showScreen(id){ $("#home").classList.toggle("hidden", id!=="home"); $("#game").classList.toggle("hidden", id!=="game"); }
+function send(m){ if(conn && conn.open){ try{ conn.send(m); }catch(e){ console.warn(e); } } }
+function connected(){ return isHost || !!(conn && conn.open); }
+
+/* ---------------- HOST ---------------- */
+function newState(){
+  // `tokens` is host-only (stripped before broadcast) so guests can't take each other's seat
+  return {v:2, phase:"lobby", players:[{name:myName(), on:true}], tokens:[null], wheel:[], turn:0,
+    counts:[0], skips:[SKIPS], ready:[false], spin:null, pending:null, last:null, event:"Room ban gaya. Doston ka intezaar…"};
+}
+function buildWheel(n){
+  const size=Math.min(P.length, Math.max(60, n*(SLOTS+SKIPS)+8)); // never runs out, even if everyone uses all skips
+  return shuffle([...shuffle(P.map(p=>p.id)).slice(0,size), DS]);
+}
+async function startHost(resume){
+  clearErr();
+  try { await loadPeerJS(); } catch(e){ return showErr("PeerJS load nahi ho paya. Internet check karo.", "Retry", ()=>startHost(resume)); }
+  isHost=true; seat=0; skew=0; conns=[];
+  if(resume){
+    const sv=lsGet(HOST_KEY); if(!sv || !sv.state || sv.state.v!==2) return showErr("Koi purana room nahi mila.");
+    code=sv.code; state=sv.state; state.players.forEach((p,i)=>{ if(i>0) p.on=false; });
+  }
+  else { code=randCode(); state=newState(); }
+  freshRoom=!resume;
+  loadPriv(); saveHost();
+  history.replaceState(null,"",location.pathname);
+  showScreen("game"); setConn(false,"Server se jud rahe hain…"); onStateChanged(); render();
+  openHostPeer(0);
+}
+function hostConnText(){
+  if(!peerOpen) return setConn(false,"Server se jud rahe hain…");
+  const n=state.players.length, on=state.players.filter(p=>p.on).length;
+  setConn(true, on+"/"+n+" online");
+}
+function openHostPeer(attempt){
+  if(peer){ try{ peer.destroy(); }catch(e){} }
+  peerOpen=false;
+  peer = new Peer("t20w-"+code, {debug:0});
+  peer.on("open", ()=>{ freshRoom=false; peerOpen=true; clearErr(); hostConnText(); render(); });
+  peer.on("connection", onHostConn);
+  peer.on("disconnected", ()=>{ peerOpen=false; setConn(false,"Server se disconnect — reconnect…"); setTimeout(()=>{ try{ if(peer && !peer.destroyed && peer.disconnected) peer.reconnect(); }catch(e){} }, 1500); });
+  peer.on("error", err=>{
+    console.warn("peer error", err.type);
+    if(err.type==="unavailable-id"){
+      if(freshRoom && attempt===0){
+        // Fresh room code clashed — pick a new one
+        code=randCode(); loadPriv(); saveHost(); render(); return openHostPeer(0);
+      }
+      if(attempt<10){ showErr("Room ID abhi busy hai (purana tab/session). Dobara try kar rahe hain… ("+(attempt+1)+"/10)"); return setTimeout(()=>openHostPeer(attempt+1), 3000); }
+      return showErr("Room ID busy hai. Purana tab band karke dobara try karo.", "Retry", ()=>openHostPeer(0));
+    }
+    if(["network","server-error","socket-error","socket-closed"].includes(err.type)){
+      showErr("Network problem — signalling server se connection nahi hua.", "Retry", ()=>openHostPeer(0));
+    } else if(err.type==="browser-incompatible"){
+      showErr("Ye browser WebRTC support nahi karta. Chrome/Safari/Firefox try karo.");
+    }
+  });
+}
+function reject(c, m){ try{ c.send({t:"err", m}); }catch(e){} setTimeout(()=>{ try{ c.close(); }catch(e){} },600); }
+function onHostConn(c){
+  c.on("data", d=>{
+    if(!d || typeof d!=="object") return;
+    const s=state;
+    if(d.t==="hello"){
+      let i=s.tokens.indexOf(d.token);
+      if(i<1){
+        if(s.phase!=="lobby") return reject(c, "Game shuru ho chuka hai — ab naye players join nahi kar sakte.");
+        if(s.players.length>=MAX_PLAYERS) return reject(c, "Ye room full hai — max "+MAX_PLAYERS+" players.");
+        i=s.players.length;
+        s.players.push({name:cleanName(d.name), on:true}); s.tokens.push(d.token);
+        s.counts.push(0); s.skips.push(SKIPS); s.ready.push(false);
+        s.event=nameOf(i)+" aa gaya! 🎉";
+      } else {
+        if(s.phase==="lobby" && cleanName(d.name)) s.players[i].name=cleanName(d.name);
+        s.event=nameOf(i)+" wapas online";
+      }
+      const old=conns[i]; conns[i]=c; c.seat=i;
+      if(old && old!==c){ old.seat=null; try{ old.close(); }catch(e){} }
+      s.players[i].on=true;
+      commit();
+      if(s.phase==="over") sendFinals();
+      return;
+    }
+    const i=c.seat; if(i==null || conns[i]!==c) return;
+    if(d.t==="act") applyAction(i, d);
+    else if(d.t==="final") onGuestFinal(i, d);
+  });
+  c.on("close", ()=>{
+    const i=c.seat;
+    if(i!=null && conns[i]===c){ conns[i]=null; if(state.players[i]){ state.players[i].on=false; state.event=nameOf(i)+" offline ho gaya"; } commit(); }
+  });
+  c.on("error", e=>console.warn("conn error", e));
+}
+function broadcast(){
+  const pub=Object.assign({}, state); delete pub.tokens;
+  const now=Date.now();
+  conns.forEach((c,i)=>{ if(c && c.open){ try{ c.send({t:"state", s:pub, seat:i, now}); }catch(e){ console.warn(e); } } });
+}
+function commit(){ saveHost(); broadcast(); onStateChanged(); hostConnText(); render(); }
+function kick(i){
+  const s=state; if(!isHost || s.phase!=="lobby" || i<1 || i>=s.players.length) return;
+  const c=conns[i], nm=nameOf(i);
+  if(c){ c.seat=null; reject(c, "Host ne tumhe room se hata diya."); }
+  ["players","tokens","counts","skips","ready"].forEach(k=>s[k].splice(i,1));
+  conns.splice(i,1); conns.forEach((x,j)=>{ if(x) x.seat=j; });
+  s.event=nm+" ko room se hataya gaya";
+  commit();
+}
+function startGame(){
+  const s=state;
+  if(!isHost || s.phase!=="lobby" || s.players.length<MIN_PLAYERS || !s.players.every(p=>p.on)) return;
+  s.wheel=buildWheel(s.players.length); s.phase="pick2x"; s.event="Game shuru! Sab apna secret 2x stat chuno";
+  commit();
+}
+function advance(from){
+  const s=state, n=s.players.length;
+  if(s.counts.every(c=>c>=SLOTS)){ s.phase="over"; s.event="Game khatam! Poora result neeche dekho 👇"; return; }
+  for(let k=1;k<=n;k++){ const j=(from+k)%n; if(s.counts[j]<SLOTS){ s.turn=j; return; } }
+}
+function applyAction(by, a){
+  const s=state;
+  if(a.a==="ready"){
+    if(s.phase!=="pick2x" || s.ready[by]) return;
+    s.ready[by]=true; s.event=nameOf(by)+" ne apna secret 2x chun liya";
+    if(s.ready.every(Boolean)){ s.phase="play"; s.turn=0; s.event="Sab ready! "+nameOf(0)+" pehle spin karega"; }
+  } else if(a.a==="spin"){
+    if(s.phase!=="play" || s.turn!==by || s.pending || s.counts[by]>=SLOTS) return;
+    if(s.spin && Date.now()-s.spin.at < SPIN_MS-200) return; // still spinning
+    let idx = Number.isInteger(a.idx) && a.idx>=0 && a.idx<s.wheel.length ? a.idx : Math.floor(Math.random()*s.wheel.length);
+    let jit = Number(a.jit); if(!(Math.abs(jit)<0.5)) jit=0;
+    const segs=s.wheel.slice(), item=segs[idx];
+    s.spin={seq:(s.spin?s.spin.seq:0)+1, by, idx, jit, segs, item, at:Date.now()};
+    if(item===DS){ s.event="🎯 DOUBLE SPIN! "+nameOf(by)+" ko ek aur spin mila"; }
+    else {
+      s.wheel=s.wheel.filter(x=>x!==item);
+      s.pending={by, pid:item, deadline:s.spin.at+SPIN_MS+DECIDE_MS};
+      s.event=nameOf(by)+" ko "+P[item].name+" mila — soch raha hai…";
+    }
+  } else if(a.a==="lock" || a.a==="skip"){
+    if(s.phase!=="play" || !s.pending || s.pending.by!==by) return;
+    if(a.a==="skip"){
+      if(s.skips[by]<=0) return;
+      s.skips[by]--; s.event=nameOf(by)+" ne Skip use kiya";
+    } else {
+      if(s.counts[by]>=SLOTS) return;
+      s.counts[by]++; s.event = a.auto ? "⏱️ Time up! "+nameOf(by)+" ka player apne aap lock ho gaya" : nameOf(by)+" ne ek stat lock kiya";
+    }
+    s.last={seq:s.spin.seq, by, pid:s.pending.pid, kind:a.a};
+    s.pending=null; advance(by);
+  } else if(a.a==="name"){
+    if(s.phase!=="lobby") return;
+    s.players[by].name=cleanName(a.name); s.event=nameOf(by)+" ne apna naam set kiya";
+  } else if(a.a==="pass"){
+    // host-only: move on when the player whose turn it is has gone offline
+    if(by!==0 || s.phase!=="play" || s.pending || s.players[s.turn].on) return;
+    s.event=nameOf(s.turn)+" offline hai — baari aage badhi"; advance(s.turn);
+  } else return;
+  commit();
+}
+function onGuestFinal(i, d){
+  priv.all[i]={picks:d.picks||{}, dbl:d.dbl||null}; savePriv(); sendFinals(); render();
+}
+function sendFinals(){
+  const m={t:"finals", all:priv.all};
+  conns.forEach(c=>{ if(c && c.open){ try{ c.send(m); }catch(e){} } });
+}
+
+/* ---------------- GUEST ---------------- */
+async function startGuest(c){
+  clearErr(); isHost=false; seat=null; code=c; loadPriv();
+  showScreen("game"); setConn(false,"Room dhoondh rahe hain…"); render();
+  try { await loadPeerJS(); } catch(e){ return showErr("PeerJS load nahi ho paya. Internet check karo.", "Retry", ()=>startGuest(c)); }
+  peer = new Peer({debug:0});
+  peer.on("open", connectToHost);
+  peer.on("disconnected", ()=>{ setTimeout(()=>{ try{ if(peer && !peer.destroyed && peer.disconnected) peer.reconnect(); }catch(e){} }, 1500); });
+  peer.on("error", err=>{
+    console.warn("peer error", err.type);
+    if(err.type==="peer-unavailable"){
+      if(everJoined){ showErr("Host abhi offline hai — reconnect kar rahe hain…"); scheduleRetry(); }
+      else { setConn(false,"Room nahi mila"); showErr("Room nahi mila! Code check karo ya host se naya link maango. (Host ka tab khula hona chahiye)", "Dobara try karo", ()=>{ clearErr(); connectToHost(); }); }
+    } else if(["network","server-error","socket-error","socket-closed"].includes(err.type)){
+      showErr("Network problem — signalling server se connection nahi hua.", "Retry", ()=>{ clearErr(); try{ peer.reconnect(); }catch(e){} connectToHost(); });
+    } else if(err.type==="browser-incompatible"){
+      showErr("Ye browser WebRTC support nahi karta. Chrome/Safari/Firefox try karo.");
+    }
+  });
+}
+function scheduleRetry(){ if(stopRetry || retryTimer) return; retryTimer=setTimeout(()=>{ retryTimer=null; if(!connected()) connectToHost(); }, 3000); }
+function connectToHost(){
+  if(!peer || peer.destroyed || stopRetry) return;
+  if(peer.disconnected){ try{ peer.reconnect(); }catch(e){} return scheduleRetry(); }
+  const c = peer.connect("t20w-"+code, {reliable:true, serialization:"json"});
+  const to = setTimeout(()=>{ if(!c.open){ try{ c.close(); }catch(e){} if(everJoined) scheduleRetry(); } }, 12000);
+  c.on("open", ()=>{ clearTimeout(to); conn=c; sentFinal=false; c.send({t:"hello", token:token(), name:myName()}); });
+  c.on("data", d=>{
+    if(!d || typeof d!=="object") return;
+    if(d.t==="state"){
+      everJoined=true; clearErr(); setConn(true,"Host se jude hue");
+      seat=d.seat; if(typeof d.now==="number") skew=d.now-Date.now();
+      onState(d.s);
+    }
+    else if(d.t==="finals"){ priv.all=d.all||{}; savePriv(); render(); }
+    else if(d.t==="err"){ stopRetry=true; setConn(false,"Join nahi hua"); showErr(d.m); }
+  });
+  c.on("close", ()=>{
+    clearTimeout(to);
+    if(conn===c){ conn=null; }
+    if(!stopRetry && everJoined){ setConn(false,"Disconnected"); showErr("Host se connection toot gaya — reconnect ho raha hai…"); scheduleRetry(); }
+    render();
+  });
+  c.on("error", e=>console.warn("conn error", e));
+}
+function onState(s){ state=s; onStateChanged(); render(); }
+
+/* ---------------- SHARED ---------------- */
+function onStateChanged(){
+  spinReq=false;
+  const sp=state && state.spin;
+  if(sp && sp.seq>seenSeq){
+    seenSeq=sp.seq;
+    if(firstState && hostNow()-(sp.at||0) > SPIN_MS){ rot=targetRot(sp); }
+    else startAnim(sp);
+  }
+  firstState=false;
+  reconcileAuto();
+  if(isHost && state.phase==="over" && !priv.all[0]){ priv.all[0]={picks:priv.picks, dbl:priv.dbl}; savePriv(); sendFinals(); }
+}
+// If the host force-locked my player (I was offline or too slow), put it in a random empty slot locally.
+function reconcileAuto(){
+  const L=state && state.last;
+  if(!L || L.by!==seat || L.kind!=="lock" || Object.values(priv.picks).includes(L.pid)) return;
+  if(Object.keys(priv.picks).length>=state.counts[seat]) return;
+  const empty=STATS.filter(st=>priv.picks[st.k]==null); if(!empty.length) return;
+  priv.picks[empty[Math.floor(Math.random()*empty.length)].k]=L.pid; savePriv();
+  if(decidedSeq!==L.seq) decidedSeq=L.seq;
+}
+function act(a){
+  if(isHost) applyAction(0, a);
+  else send(Object.assign({t:"act"}, a));
+}
+function doSpin(){
+  if(!canSpin()) return;
+  spinReq=true;
+  const n=state.wheel.length;
+  act({a:"spin", idx:Math.floor(Math.random()*n), jit:(Math.random()-.5)*0.7});
+  render();
+  if(!isHost) setTimeout(()=>{ if(spinReq){ spinReq=false; render(); } }, 5000);
+}
+function canSpin(){
+  return state && state.phase==="play" && state.turn===seat && !state.pending && !anim && !spinReq && connected() && state.counts[seat]<SLOTS;
+}
+function decide(kind, statKey, auto){
+  const pd=state.pending;
+  if(!pd || pd.by!==seat || decidedSeq===state.spin.seq) return;
+  if(kind==="lock"){ if(priv.picks[statKey]!=null) return; priv.picks[statKey]=pd.pid; savePriv(); }
+  else if(state.skips[seat]<=0) return;
+  decidedSeq=state.spin.seq;
+  act({a:kind, auto:!!auto}); render();
+}
+function autoDecide(){
+  const empty=STATS.filter(st=>priv.picks[st.k]==null);
+  if(empty.length) decide("lock", empty[Math.floor(Math.random()*empty.length)].k, true);
+}
+function confirm2x(){
+  if(!pick2x || !connected()) return;
+  priv.dbl=pick2x; savePriv(); act({a:"ready"}); render();
+}
+function sendFinal(){ if(isHost || !connected()) return; send({t:"final", picks:priv.picks, dbl:priv.dbl}); sentFinal=true; }
+
+/* ---------------- COUNTDOWN ---------------- */
+function msLeft(){ const pd=state && state.pending; return pd ? pd.deadline-hostNow() : 0; }
+function countdownHTML(){
+  const left=Math.max(0,msLeft());
+  return '<div class="cd'+(left<=10000?" low":"")+'">⏱️<span class="cdbar"><i style="width:'+Math.min(100,left/DECIDE_MS*100)+'%"></i></span><b data-cd>'+Math.ceil(left/1000)+'s</b></div>';
+}
+function tick(){
+  if(!state || state.phase!=="play" || !state.pending || anim) return;
+  const pd=state.pending, left=msLeft(), c=Math.max(0,left);
+  document.querySelectorAll(".cd").forEach(el=>{
+    el.classList.toggle("low", c<=10000);
+    el.querySelector("[data-cd]").textContent=Math.ceil(c/1000)+"s";
+    el.querySelector(".cdbar i").style.width=Math.min(100,c/DECIDE_MS*100)+"%";
+  });
+  if(left<=0 && pd.by===seat && decidedSeq!==state.spin.seq && connected()) autoDecide();
+  else if(isHost && left<=-GRACE_MS && state.pending) applyAction(pd.by, {a:"lock", auto:true});
+}
+setInterval(tick, 250);
+
+/* ---------------- WHEEL ---------------- */
+function targetRot(sp){ const seg=2*Math.PI/sp.segs.length; return -Math.PI/2-(sp.idx+0.5+sp.jit)*seg; }
+function startAnim(sp){
+  const T=2*Math.PI, target=targetRot(sp);
+  const delta=(((target-rot)%T)+T)%T;
+  anim={seq:sp.seq, t0:performance.now(), from:rot, to:rot+delta+T*5};
+  const a=anim;
+  const done=()=>{ if(anim!==a) return; rot=a.to%T; anim=null; drawWheel(); render();
+    const d=$(".decide"); if(d && window.innerWidth<820) d.scrollIntoView({behavior:"smooth", block:"nearest"}); };
+  const tick=now=>{ if(anim!==a) return; const p=Math.min(1,(now-a.t0)/SPIN_MS), e=1-Math.pow(1-p,3); rot=a.from+(a.to-a.from)*e; drawWheel(); if(p<1) requestAnimationFrame(tick); else done(); };
+  requestAnimationFrame(tick);
+  setTimeout(done, SPIN_MS+150); // background tabs pause rAF — make sure it finishes
+}
+function currentSegs(){ return state.spin && (anim || state.pending) ? state.spin.segs : state.wheel; }
+const TEAM_COL = {IND:"#1d5fd1",PAK:"#11823b",AUS:"#e0a800",ENG:"#233a78",NZ:"#2b2b2b",SA:"#0b6b4f",WI:"#7a1f2b",AFG:"#1e63b0",BAN:"#0a7d4a",SL:"#1a3f8f",IRE:"#169b62"};
+const SEG_COL = ["#1f7a4d","#c8283a","#1d5fd1","#e3a51c","#6b3fa0","#0f8a8a"];
+function drawWheel(){
+  const cv=$("#wheel"); if(!cv || !state) return;
+  const w=cv.clientWidth; if(!w) return;
+  const dpr=window.devicePixelRatio||1, px=Math.round(w*dpr);
+  if(cv.width!==px){ cv.width=px; cv.height=px; }
+  const ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,w);
+  const segs=currentSegs(), n=segs.length, cx=w/2, r=w/2-4, seg=2*Math.PI/n;
+  const base=Math.max(6, Math.min(17, (2*Math.PI*r*0.82/n)*0.8));
+  const hl = !anim && state.spin && state.pending ? state.spin.idx : -1;
+  for(let i=0;i<n;i++){
+    const it=segs[i], a0=rot+i*seg, a1=a0+seg;
+    ctx.beginPath(); ctx.moveTo(cx,cx); ctx.arc(cx,cx,r,a0,a1); ctx.closePath();
+    ctx.fillStyle = it===DS ? "#f2bb3d" : SEG_COL[i%SEG_COL.length];
+    if(n%SEG_COL.length===1 && i===n-1 && it!==DS) ctx.fillStyle=SEG_COL[2]; // avoid same colour neighbours at seam
+    ctx.fill();
+    if(i===hl){ ctx.fillStyle="rgba(255,255,255,.35)"; ctx.fill(); }
+    ctx.strokeStyle="rgba(255,255,255,.55)"; ctx.lineWidth=1; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cx); ctx.rotate(a0+seg/2);
+    const label = it===DS ? "★ DOUBLE SPIN" : P[it].label;
+    let fs=base; ctx.font="700 "+fs+"px system-ui,sans-serif";
+    const maxW=r*0.66; const mw=ctx.measureText(label).width;
+    if(mw>maxW){ fs=Math.max(5, fs*maxW/mw); ctx.font="700 "+fs+"px system-ui,sans-serif"; }
+    ctx.textAlign="right"; ctx.textBaseline="middle";
+    ctx.fillStyle = it===DS ? "#2a1a00" : "#fff";
+    ctx.fillText(label, r-8, 0.5);
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(cx,cx,r,0,2*Math.PI); ctx.lineWidth=4; ctx.strokeStyle="rgba(0,0,0,.18)"; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cx,r*0.15,0,2*Math.PI); ctx.fillStyle="#fff"; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle="#c8283a"; ctx.stroke();
+  ctx.font="900 "+Math.round(r*0.12)+"px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillStyle="#c8283a"; ctx.fillText("T20",cx,cx+1);
+}
+
+/* ---------------- RESULTS ---------------- */
+function allFinals(){ const n=state.players.length; for(let i=0;i<n;i++) if(!priv.all[i]) return false; return true; }
+function computeResult(){
+  const n=state.players.length, side=priv.all, tot=Array(n).fill(0);
+  const rows=STATS.map(st=>{
+    const pid=[], val=[];
+    for(let i=0;i<n;i++){ pid[i]=side[i].picks[st.k]; val[i]= pid[i]!=null ? P[pid[i]].s[st.k] : null; }
+    const vals=val.filter(v=>v!=null); let win=[];
+    if(vals.length){
+      const best = st.lo ? Math.min(...vals) : Math.max(...vals);
+      win = val.map((v,i)=>v===best?i:-1).filter(i=>i>=0);
+      if(win.length===n) win=[]; // everyone equal = no point
+    }
+    const pts = win.map(i=> side[i].dbl===st.k ? 2 : 1);
+    win.forEach((i,j)=>tot[i]+=pts[j]);
+    return {st, pid, val, win, pts};
+  });
+  return {rows, tot, side};
+}
+
+/* ---------------- RENDER ---------------- */
+function render(){
+  if(!state){ // guest waiting for first state
+    $("#gCode").textContent=code||""; $("#gRole").className="pill"; $("#gRole").textContent="Tum: "+(myName()||"Guest");
+    $("#gTurn").textContent="Room se jud rahe hain…"; $("#gTurn").className="turn";
+    $("#gEvent").textContent=""; $("#gScore").innerHTML=""; $("#gBody").innerHTML='<div class="card muted" style="text-align:center">⏳ Host se connection ban raha hai…</div>';
+    return;
+  }
+  const s=state, me=seat;
+  $("#gCode").textContent=code;
+  $("#gRole").className="pill "+pc(me); $("#gRole").textContent="Tum: "+nameOf(me)+(isHost?" (host)":"");
+  let turn="", mine=false;
+  if(s.phase==="lobby") turn = isHost ? "Doston ka intezaar… ("+s.players.length+"/"+MAX_PLAYERS+")" : "Host game shuru karega…";
+  else if(s.phase==="pick2x") turn = priv.dbl && s.ready[me] ? "Baaki players 2x chun rahe hain…" : "Apna secret 2x stat chuno";
+  else if(s.phase==="play"){ mine = s.turn===me; turn = mine ? "🎯 Tumhari baari!" : nameOf(s.turn)+" ki baari…"; }
+  else turn="🏁 Game khatam!";
+  $("#gTurn").textContent=turn; $("#gTurn").className="turn"+(mine?" me":"");
+  $("#gEvent").textContent = anim ? "🎡 Wheel ghoom raha hai…" : (s.event||"");
+  if(s.phase==="play" || s.phase==="over"){
+    $("#gScore").innerHTML = s.players.map((p,i)=>'<span class="pill '+pc(i)+(s.phase==="play"&&s.turn===i?" now":"")+(p.on?"":" off")+'">'+esc(nameOf(i))+' <b>'+s.counts[i]+'/'+SLOTS+'</b></span>').join("")+
+      '<span class="pill">Tumhare Skips: <b>'+s.skips[me]+'/'+SKIPS+'</b></span>';
+  } else $("#gScore").innerHTML="";
+
+  const body=$("#gBody"), ae=document.activeElement, typing = ae && ae.id==="nameIn" ? ae.value : null;
+  if(s.phase==="lobby") body.innerHTML=lobbyHTML();
+  else if(s.phase==="pick2x") body.innerHTML=pickHTML();
+  else if(s.phase==="play") body.innerHTML=playHTML();
+  else body.innerHTML=overHTML();
+  bind();
+  if(typing!=null && $("#nameIn")){ const el=$("#nameIn"); el.value=typing; el.focus(); }
+  if(s.phase==="play") drawWheel();
+  if(s.phase==="over" && !isHost && connected() && !sentFinal) sendFinal();
+}
+function shareLink(){ return location.origin+location.pathname+"?room="+code; }
+function playerListHTML(opts){
+  const s=state;
+  return '<ul class="plist">'+s.players.map((p,i)=>'<li class="'+pc(i)+'"><span class="dot'+(p.on?" on":"")+'"></span><span class="nm">'+esc(nameOf(i))+(i===seat?" (tum)":"")+(i===0?" 👑":"")+'</span>'+
+    (opts.ready ? '<span class="small">'+(s.ready[i]?"ready ✅":"soch raha hai…")+'</span>' : '')+
+    (opts.kick && i>0 ? '<button class="sm ghost" data-kick="'+i+'">Hatao</button>' : '')+'</li>').join("")+'</ul>';
+}
+function lobbyHTML(){
+  const s=state, n=s.players.length, allOn=s.players.every(p=>p.on);
+  let h='<div class="card stack" style="max-width:520px;margin:0 auto">';
+  if(isHost){
+    h+='<div class="muted small" style="text-align:center">Room code</div><div class="code">'+esc(code)+'</div>'+
+      '<div class="muted small">Ye link doston ko bhejo (max '+MAX_PLAYERS+' players):</div>'+
+      '<div class="share"><input id="shareIn" readonly value="'+esc(shareLink())+'"><button id="btnCopy" class="primary">Copy</button></div>'+
+      (navigator.share ? '<button id="btnShare" class="ghost" style="width:100%">📤 WhatsApp / Share</button>' : '');
+  }
+  h+='<div class="share"><input id="nameIn" maxlength="16" placeholder="Tumhara naam" value="'+esc(s.players[seat].name||"")+'"><button id="btnName" class="ghost">Naam save</button></div>';
+  h+='<h3 style="margin:4px 0 0">Players ('+n+'/'+MAX_PLAYERS+')</h3>'+playerListHTML({kick:isHost});
+  if(isHost){
+    const ok=n>=MIN_PLAYERS && allOn;
+    h+='<button id="btnStart" class="primary" style="width:100%" '+(ok?"":"disabled")+'>▶️ Game shuru karo ('+n+' players)</button>'+
+      '<p class="muted small" style="margin:0">'+(n<MIN_PLAYERS ? "⏳ Kam se kam 1 dost ka join hona zaroori hai. Ye tab khula rakho." : (!allOn ? "Koi player offline hai — uske wapas aane ka intezaar karo ya use hatao." : "Sab aa gaye? Game shuru karo! Shuru hone ke baad naye players join nahi kar paayenge."))+'</p>';
+  } else h+='<p class="muted small" style="margin:0">⏳ Host ke "Game shuru karo" dabane ka intezaar…</p>';
+  return h+'</div>';
+}
+function pickHTML(){
+  const s=state, me=seat, done=priv.dbl && s.ready[me];
+  const nReady=s.ready.filter(Boolean).length, n=s.players.length;
+  if(done){
+    return '<div class="card stack" style="max-width:520px;margin:0 auto">'+
+      '<div style="text-align:center">Tumhara secret 2x: <span class="tag2x">2x</span> <b>'+esc(statName(priv.dbl))+'</b></div>'+
+      '<div class="muted small" style="text-align:center">Ready: '+nReady+'/'+n+'</div>'+playerListHTML({ready:true})+'</div>';
+  }
+  const cur = pick2x || priv.dbl;
+  return '<div class="card stack" style="max-width:560px;margin:0 auto">'+
+    '<h3 style="margin:0">🤫 Secret 2x stat</h3><p class="muted small" style="margin:0">Is stat ki jeet pe tumhe 2 points milenge. Baaki players ko game ke end tak pata nahi chalega.</p>'+
+    '<div class="picker">'+STATS.map(st=>'<button data-2x="'+st.k+'" class="'+(cur===st.k?"sel":"")+'">'+(cur===st.k?"⭐ ":"")+esc(st.n)+(st.lo?' <span class="muted small">(kam = behtar)</span>':'')+'</button>').join("")+'</div>'+
+    '<button id="btnReady" class="primary" style="width:100%" '+(cur&&connected()?"":"disabled")+'>2x lock karo</button>'+
+    '<div class="muted small" style="text-align:center">Ready: '+nReady+'/'+n+'</div></div>';
+}
+function mySlotsHTML(){
+  return '<div class="slots">'+STATS.map(st=>{
+    const pid=priv.picks[st.k], d=priv.dbl===st.k;
+    return '<div class="slot'+(pid!=null?" filled":"")+'">'+(d?'<span class="badge2x">2x</span>':'')+'<div class="k">'+esc(st.n)+'</div>'+
+      (pid!=null ? '<div class="v">'+esc(P[pid].label)+' · '+fmt(P[pid].s[st.k])+'</div>' : '<div class="v muted">khaali</div>')+'</div>';
+  }).join("")+'</div>';
+}
+function othersHTML(){
+  const s=state;
+  return s.players.map((p,i)=>{
+    if(i===seat) return "";
+    let g='<div class="lockgrid">'; for(let k=0;k<SLOTS;k++) g+='<div class="'+(k<s.counts[i]?"f":"")+'">'+(k<s.counts[i]?"🔒":"")+'</div>';
+    return '<div class="opp '+pc(i)+'"><div class="who"><span>'+esc(nameOf(i))+(p.on?"":" · offline")+'</span><span class="muted">'+s.counts[i]+'/'+SLOTS+'</span></div>'+g+'</div></div>';
+  }).join("");
+}
+function playHTML(){
+  const s=state, me=seat, pd=s.pending;
+  let side='';
+  if(!anim && pd && pd.by===me && decidedSeq!==s.spin.seq){
+    const p=P[pd.pid], col=TEAM_COL[p.team]||"var(--pitch)";
+    side='<div class="card decide">'+countdownHTML()+'<div class="pcard"><div class="av" style="background:'+col+'">'+esc(p.team)+'</div><div><div class="nm">'+esc(p.name)+'</div><div class="muted small">T20I career (approx) — sirf tumhe dikh raha hai</div></div></div>'+
+      '<table><thead><tr><th>Stat</th><th>Value</th><th></th></tr></thead><tbody>'+
+      STATS.map(st=>{
+        const used=priv.picks[st.k]!=null;
+        return '<tr><td>'+esc(st.n)+(priv.dbl===st.k?'<span class="tag2x">2x</span>':'')+'</td><td class="num">'+fmt(p.s[st.k])+'</td><td style="text-align:right">'+
+          (used ? '<span class="muted small">✔ '+esc(P[priv.picks[st.k]].label)+'</span>' : '<button class="sm primary" data-lock="'+st.k+'">Lock</button>')+'</td></tr>';
+      }).join("")+'</tbody></table>'+
+      '<button id="btnSkip" class="ghost" style="width:100%;margin-top:10px" '+(s.skips[me]>0?"":"disabled")+'>⏭️ Skip ('+s.skips[me]+' bache)</button>'+
+      '<div class="muted small" style="margin-top:8px;text-align:center">Time khatam hone pe player kisi khaali slot mein apne aap lock ho jayega.</div></div>';
+  } else if(!anim && pd && pd.by!==me){
+    side='<div class="card"><div class="muted" style="text-align:center;margin-bottom:8px">🤔 '+esc(nameOf(pd.by))+' apna faisla le raha hai…</div>'+countdownHTML()+'</div>';
+  } else if(!anim && s.spin && s.spin.item===DS && s.turn===me && !pd && s.spin.by===me){
+    side='<div class="card"><div class="ds">★ DOUBLE SPIN! ★</div><div class="muted" style="text-align:center">Phir se SPIN karo — baari tumhari hi hai.</div></div>';
+  }
+  const spinLabel = s.counts[me]>=SLOTS ? "✅ Tumhare 8/8 ho gaye" : (s.turn===me ? "SPIN" : "Wait…");
+  const canPass = isHost && !pd && !anim && s.turn!==me && !s.players[s.turn].on;
+  return '<div class="grid"><div class="card">'+
+      '<div class="wheelwrap"><div class="pointer"></div><canvas id="wheel" aria-label="Spin wheel"></canvas></div>'+
+      '<button id="btnSpin" class="spinbtn '+(canSpin()?"primary":"")+'" '+(canSpin()?"":"disabled")+'>'+spinLabel+'</button>'+
+      (canPass ? '<button id="btnPass" class="ghost sm" style="display:block;margin:10px auto 0">⏭️ '+esc(nameOf(s.turn))+' offline hai — baari aage badhao</button>' : '')+
+      (!connected() ? '<div class="muted small" style="text-align:center;margin-top:6px">Host se connection nahi hai — wapas judne pe khelo.</div>' : '')+
+    '</div><div class="stack">'+side+
+      '<div class="card panel"><h3>Tumhari team ('+esc(nameOf(me))+')</h3>'+mySlotsHTML()+'</div>'+
+      '<div class="card panel"><h3>Baaki players 🔒</h3>'+othersHTML()+'<div class="muted small" style="margin-top:8px">Sab ke picks aur 2x game ke end mein dikhenge.</div></div>'+
+    '</div></div>';
+}
+function overHTML(){
+  if(!allFinals()){
+    const n=state.players.length, got=Object.keys(priv.all).length;
+    return '<div class="card stack" style="text-align:center">⏳ Sab players ka final data aa raha hai… ('+got+'/'+n+')'+(connected()?'':'<div class="muted small">Host se connection nahi hai — wapas judte hi result dikhega.</div>')+
+      '<div class="panel" style="text-align:left"><h3>Tumhari team</h3>'+mySlotsHTML()+'</div></div>';
+  }
+  const R=computeResult(), me=seat, n=state.players.length;
+  const max=Math.max(...R.tot), winners=R.tot.map((t,i)=>t===max?i:-1).filter(i=>i>=0);
+  const head = winners.length===n ? "🤝 Match tie!" : winners.includes(me) ? (winners.length>1 ? "🏆 Tum joint winner ho!" : "🏆 Tum jeet gaye!") : "😅 "+winners.map(nameOf).join(" & ")+" jeet "+(winners.length>1?"gaye":"gaya");
+  const order=R.tot.map((t,i)=>i).sort((a,b)=>R.tot[b]-R.tot[a]);
+  const cell=(i,rw)=>{
+    const pid=rw.pid[i], d=R.side[i].dbl===rw.st.k;
+    return '<td class="'+(rw.win.includes(i)?"w":"")+'">'+(pid!=null?esc(P[pid].name):'<span class="muted">—</span>')+(d?'<span class="tag2x">2x</span>':'')+
+      '<div class="num">'+fmt(rw.val[i])+'</div></td>';
+  };
+  const idx=[...Array(n).keys()];
+  return '<div class="stack"><div class="win"><h2>'+esc(head)+'</h2>'+
+      '<ol class="rank">'+order.map((i,k)=>'<li class="'+(R.tot[i]===max?"top":"")+'"><span>'+(k+1)+'. '+esc(nameOf(i))+(i===me?" (tum)":"")+'</span><span>'+R.tot[i]+' pts</span></li>').join("")+'</ol>'+
+      '<div class="small" style="margin-top:8px">2x slots pe jeet = 2 points</div></div>'+
+    '<div class="card scroll"><table><thead><tr><th>Stat</th>'+idx.map(i=>'<th style="color:var(--p'+(i%6)+')">'+esc(nameOf(i))+'</th>').join("")+'<th>Point</th></tr></thead><tbody>'+
+    R.rows.map(rw=>'<tr><td><b>'+esc(rw.st.n)+'</b>'+(rw.st.lo?'<div class="muted small">kam = behtar</div>':'')+'</td>'+idx.map(i=>cell(i,rw)).join("")+
+      '<td class="num">'+(rw.win.length ? rw.win.map((i,j)=>esc(nameOf(i))+" +"+rw.pts[j]).join("<br>") : "tie")+'</td></tr>').join("")+
+    '</tbody></table><p class="muted small">Stats approximate T20I career figures hain. "—" = data nahi (worst maana gaya).</p></div>'+
+    '<div class="foot"><button id="btnNew" class="primary">🔁 Naya game</button></div></div>';
+}
+function bind(){
+  const on=(sel,fn)=>{ const el=$(sel); if(el) el.onclick=fn; };
+  on("#btnSpin", doSpin);
+  on("#btnSkip", ()=>decide("skip"));
+  on("#btnReady", confirm2x);
+  on("#btnStart", startGame);
+  on("#btnPass", ()=>act({a:"pass"}));
+  on("#btnName", ()=>{ const v=cleanName($("#nameIn").value); try{ localStorage.setItem(NAME_KEY, v); }catch(e){} $("#myName").value=v; act({a:"name", name:v}); });
+  on("#btnCopy", copyLink);
+  on("#btnShare", ()=>navigator.share({title:"T20 Spin Wheel", text:"Mere saath T20 Spin Wheel khelo!", url:shareLink()}).catch(()=>{}));
+  on("#btnNew", ()=>{ if(isHost) localStorage.removeItem(HOST_KEY); location.href=location.pathname; });
+  document.querySelectorAll("[data-lock]").forEach(b=>b.onclick=()=>decide("lock", b.dataset.lock));
+  document.querySelectorAll("[data-kick]").forEach(b=>b.onclick=()=>kick(Number(b.dataset.kick)));
+  document.querySelectorAll("[data-2x]").forEach(b=>b.onclick=()=>{ pick2x=b.dataset["2x"]; render(); });
+}
+function copyLink(){
+  const inp=$("#shareIn"), btn=$("#btnCopy"), ok=()=>{ btn.textContent="Copied ✓"; setTimeout(()=>{ if(btn.isConnected) btn.textContent="Copy"; },1600); };
+  if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(inp.value).then(ok, ()=>{ inp.select(); document.execCommand("copy"); ok(); });
+  else { inp.select(); document.execCommand("copy"); ok(); }
+}
+
+/* ---------------- BOOT ---------------- */
+window.addEventListener("resize", ()=>{ if(state && state.phase==="play") drawWheel(); });
+$("#myName").value=myName();
+$("#myName").oninput=e=>{ try{ localStorage.setItem(NAME_KEY, cleanName(e.target.value)); }catch(err){} };
+$("#btnCreate").onclick=()=>startHost(false);
+$("#btnResume").onclick=()=>startHost(true);
+$("#joinForm").onsubmit=e=>{ e.preventDefault(); const c=$("#joinCode").value.trim().toUpperCase(); if(!/^[A-Z0-9]{5}$/.test(c)) return showErr("Room code 5 characters ka hota hai."); location.href=location.pathname+"?room="+c; };
+(function boot(){
+  const saved=lsGet(HOST_KEY);
+  if(saved && saved.code && saved.state && saved.state.v===2 && saved.state.phase!=="over"){ $("#btnResume").classList.remove("hidden"); $("#btnResume").textContent="↩️ Room resume karo ("+saved.code+")"; }
+  const q=(new URLSearchParams(location.search).get("room")||"").trim().toUpperCase();
+  if(q){
+    if(!/^[A-Z0-9]{5}$/.test(q)){ showErr("Link ka room code galat hai."); return; }
+    startGuest(q);
+  }
+})();
+</script>
+</body>
+</html>
